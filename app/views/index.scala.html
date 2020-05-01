@@ -1,20 +1,39 @@
-@*
- * This template takes a single argument, a String containing a
- * message to display.
- *@
-@(message: String)
+<html>
+    <head>
+        <script>
+	const socket = new WebSocket("ws://localhost:9000/ws/solitaire");
 
-@*
- * Call the `main` template with two arguments. The first
- * argument is a `String` with the title of the page, the second
- * argument is an `Html` object containing the body of the page.
- *@
-@main("Welcome to Play") {
+    socket.onopen = function(e) {
+        console.log("[open] Connection established");
+        console.log("Sending to server");
+        // socket.send(JSON.stringify({msg: "My name is John", data: "sadasdasd"}));
+        writeToSocket("howdy", {name: "Roger"})
+    };
 
-    @*
-     * Get an `Html` object by calling the built-in Play welcome
-     * template and passing a `String` message.
-     *@
-    @welcome(message, style = "scala")
+    socket.onmessage = function(event) {
+        console.log(`[message] Data received from server: ${event.data}`);
+        console.log(`[message] Data received from server: ${JSON.parse(event.data).data}`);
+    };
 
-}
+    socket.onclose = function(event) {
+        if (event.wasClean) {
+            console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+        } else {
+            // e.g. server process killed or network down
+            // event.code is usually 1006 in this case
+            console.log('[close] Connection died');
+        }
+    };
+
+    socket.onerror = function(error) {
+        console.log(`[error] ${error.message}`);
+    };
+
+    function writeToSocket(task, obj) {
+        const pack = JSON.stringify({task: task, ts: new Date().getTime(), data: JSON.stringify(obj)});
+        console.log(pack);
+        socket.send(pack);
+    }
+</script>
+    </head>
+</html>
