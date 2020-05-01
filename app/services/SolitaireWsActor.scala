@@ -3,9 +3,9 @@ package services
 import java.util.UUID
 
 import akka.actor.{Actor, ActorRef, PoisonPill}
+import entity.game.{PlayerList, PlayerName}
 import entity.{InMsg, OutMsg}
 import game.Player
-import game.entity.{PlayerList, PlayerName}
 import game.solitaire.Lobby
 import util.SimpleJsonParser
 
@@ -14,7 +14,7 @@ class SolitaireWsActor(out: ActorRef) extends Actor with SimpleJsonParser {
 
   private def welcome(data: String): String = {
     val playerName = jsonString2T[PlayerName](data)
-    Lobby.addPlayer(uuid, new Player(uuid, playerName.name))
+    Lobby.addPlayer(uuid, new Player(uuid, playerName.name, out))
     t2JsonString[PlayerList](PlayerList(Lobby.getIdlePlayers.map(p => (p.uuid.toString, p.name))))
   }
 

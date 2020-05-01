@@ -1,4 +1,4 @@
-package game.entity
+package entity.game
 
 import play.api.libs.json.{Json, OFormat}
 

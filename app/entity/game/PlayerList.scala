@@ -1,6 +1,6 @@
-package game.entity
+package entity.game
 
-import game.entity.PlayerList.playerUuidAndName
+import entity.game.PlayerList.playerUuidAndName
 import play.api.libs.json.{Json, OFormat}
 
 case class PlayerList(players: Seq[playerUuidAndName])

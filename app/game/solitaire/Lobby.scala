@@ -1,21 +1,34 @@
 package game.solitaire
 
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
+import entity.OutMsg
 import game.Player
 
 import scala.collection.concurrent.TrieMap
 
 object Lobby {
 
-  private val players = new TrieMap[UUID, Player]()
+  private val playerMap = new TrieMap[UUID, Player]()
 
-  def addPlayer(uuid: UUID, player: Player): Option[Player] = players.put(uuid, player)
+  def addPlayer(uuid: UUID, player: Player): Option[Player] = {
+    val opt = playerMap.put(uuid, player)
+    broadcastCount()
+    opt
+  }
 
-  def removePlayer(uuid: UUID): Option[Player] = players.remove(uuid)
+  def removePlayer(uuid: UUID): Option[Player] = {
+    val opt = playerMap.remove(uuid)
+    broadcastCount()
+    opt
+  }
 
   def getIdlePlayers: Seq[Player] = {
-    players.values.filter(p => !p.busy).toSeq
+    playerMap.values.filter(p => !p.busy).toSeq
+  }
+
+  def broadcastCount() = {
+    val c = playerMap.size
+    playerMap.values.foreach(p => p.send(OutMsg("count", 0, s"""{count: $c}""")))
   }
 }

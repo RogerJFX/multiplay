@@ -31,9 +31,11 @@
 
     function writeToSocket(task, obj) {
         const pack = JSON.stringify({task: task, ts: new Date().getTime(), data: JSON.stringify(obj)});
-        console.log(pack);
         socket.send(pack);
     }
+    const interval = setInterval(() => {
+        writeToSocket('ping', {});
+    }, 10000)
 </script>
     </head>
 </html>
