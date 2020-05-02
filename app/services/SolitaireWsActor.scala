@@ -3,14 +3,18 @@ package services
 import java.util.UUID
 
 import akka.actor.{Actor, ActorRef, PoisonPill}
-import entity.game.{PlayerListDTO, PlayerNameDTO}
-import entity.{InMsg, OutMsg}
+import entity.game.{PlayerListDTO, PlayerNameDTO, UuidDTO}
+import entity.{InMsg, OutMsg, Task}
 import game.Player
 import game.solitaire.Lobby
 import util.SimpleJsonParser
 
-class SolitaireWsActor(out: ActorRef) extends Actor with SimpleJsonParser {
+class SolitaireWsActor(out: ActorRef) extends Actor with SimpleJsonParser with Task {
   private val uuid = UUID.randomUUID()
+
+  private def getPlayer() = {
+    Lobby.getPlayer(uuid).getOrElse(throw new RuntimeException("Cannot get player"))
+  }
 
   private def welcome(data: String): String = {
     val playerName = jsonString2T[PlayerNameDTO](data)
@@ -20,7 +24,7 @@ class SolitaireWsActor(out: ActorRef) extends Actor with SimpleJsonParser {
 
   private def createRoom(data: String) = {
     val roomName = jsonString2T[PlayerNameDTO](data)
-    val player = Lobby.getPlayer(uuid).getOrElse(throw new RuntimeException("Cannot get player"))
+    val player = getPlayer()
     val room = player.createRoom(roomName.name)
     room match {
       case Some(room) =>
@@ -28,21 +32,32 @@ class SolitaireWsActor(out: ActorRef) extends Actor with SimpleJsonParser {
       case _ =>
         """{"foul": -1}"""
     }
-
+  }
+  // UuidDTO
+  private def enterRoom(data:String) = {
+    val _uuid = jsonString2T[UuidDTO](data).uuid
+    val room = Lobby.getRoom(_uuid)
+    room match {
+      case Some(room) =>
+        room.addPlayer(getPlayer())
+    }
   }
 
   private def resolve(msg: InMsg): Unit = {
     msg.task match {
-      case "ping" =>
+      case TASK_PING =>
         out ! OutMsg(msg.task, msg.ts, """{"res": "pong"}""")
-      case "howdy" =>
+      case TASK_COME_IN =>
         out ! OutMsg(msg.task, msg.ts, welcome(msg.data))
-      case "rooms" =>
+      case TASK_ROOM_LIST =>
         out ! Lobby.createRoomsMsg(msg.ts)
-      case "roomCreate" =>
-        out ! OutMsg("roomEnter", msg.ts, createRoom(msg.data))
+      case TASK_ROOM_CREATE =>
+        out ! OutMsg(TASK_ROOM_ENTER, msg.ts, createRoom(msg.data))
+      case TASK_ROOM_ENTER =>
+        out ! OutMsg(TASK_ROOM_ENTER, msg.ts, createRoom(msg.data))
     }
   }
+
   override def receive: Receive = {
     case msg: InMsg =>
       resolve(msg)
@@ -60,7 +75,7 @@ class SolitaireWsActor(out: ActorRef) extends Actor with SimpleJsonParser {
   }
 
   private def goodbye() = {
-    val player = Lobby.getPlayer(uuid).getOrElse(throw new RuntimeException("Cannot get player"))
+    val player = getPlayer()
     val room = player.myRoom
     if(room != null) {
       room.removePlayer(player);

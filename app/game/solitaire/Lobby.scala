@@ -2,14 +2,14 @@ package game.solitaire
 
 import java.util.UUID
 
-import entity.OutMsg
+import entity.{OutMsg, Task}
 import entity.game.RoomListDTO
 import game.Player
 import util.SimpleJsonParser
 
 import scala.collection.concurrent.TrieMap
 
-object Lobby extends SimpleJsonParser {
+object Lobby extends SimpleJsonParser with Task {
 
   private val playerMap = new TrieMap[UUID, Player]()
   private val roomMap = new TrieMap[UUID, Room]()
@@ -65,7 +65,7 @@ object Lobby extends SimpleJsonParser {
   }
 
   def createRoomsMsg(ts: Long = 0L): OutMsg = {
-    OutMsg("rooms", ts, t2JsonString[RoomListDTO](RoomListDTO(roomMap.values.map(room => {
+    OutMsg(TASK_ROOM_LIST, ts, t2JsonString[RoomListDTO](RoomListDTO(roomMap.values.map(room => {
       (room.uuid, room.name, room.maxPlayers, room.players.size)
     }).toSeq)))
   }
@@ -80,7 +80,7 @@ object Lobby extends SimpleJsonParser {
   private def broadcastCount() = {
     val c = playerMap.size
     val r = roomMap.size
-    val msg = OutMsg("count", 0, s"""{"players": $c, "rooms": $r}""")
+    val msg = OutMsg(TASK_SIZES, 0, s"""{"players": $c, "rooms": $r}""")
     playerMap.values.foreach(p => p.send(msg))
   }
 }
