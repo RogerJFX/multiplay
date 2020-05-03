@@ -1,41 +1,6 @@
 <html>
-    <head>
-        <script>
-	const socket = new WebSocket("ws://localhost:9000/ws/solitaire");
-
-    socket.onopen = function(e) {
-        console.log("[open] Connection established");
-        console.log("Sending to server");
-        // socket.send(JSON.stringify({msg: "My name is John", data: "sadasdasd"}));
-        writeToSocket("howdy", {name: "Roger"})
-    };
-
-    socket.onmessage = function(event) {
-        console.log(`[message] Data received from server: ${event.data}`);
-        console.log(`[message] Data received from server: ${JSON.parse(event.data).data}`);
-    };
-
-    socket.onclose = function(event) {
-        if (event.wasClean) {
-            console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
-        } else {
-            // e.g. server process killed or network down
-            // event.code is usually 1006 in this case
-            console.log('[close] Connection died');
-        }
-    };
-
-    socket.onerror = function(error) {
-        console.log(`[error] ${error.message}`);
-    };
-
-    function writeToSocket(task, obj) {
-        const pack = JSON.stringify({task: task, ts: new Date().getTime(), data: JSON.stringify(obj)});
-        socket.send(pack);
-    }
-    const interval = setInterval(() => {
-        writeToSocket('ping', {});
-    }, 10000)
-</script>
-    </head>
+  <body>
+      <div>Compilation ok. Just use some clients to test your functionality.</div>
+      <div>Come back here and reload, if you want to test the recent compilation.</div>
+  </body>
 </html>

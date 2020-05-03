@@ -10,8 +10,8 @@ object Types {
   type PlayerDef = (UUID, String)
 
   /**
-   * UUID, room name, max players in room, current players
+   * UUID, room name, max players in room, current players, open
    */
-  type RoomDef = (UUID, String, Int, Int)
+  type RoomDef = (UUID, String, Int, Int, Boolean)
 
 }

@@ -6,7 +6,7 @@ import akka.actor.ActorRef
 import entity.OutMsg
 import game.solitaire.{Lobby, Room}
 
-class Player(val uuid: UUID, val name: String, out: ActorRef) {
+class Player(val uuid: UUID, val name: String, out: ActorRef, lobby: Lobby) {
   var busy: Boolean = false
   var myRoom: Room = _
 
@@ -14,12 +14,17 @@ class Player(val uuid: UUID, val name: String, out: ActorRef) {
     out ! outMsg
   }
 
+  def leaveRoom() = {
+    busy = false
+    myRoom = null
+  }
+
   def createRoom(name: String): Option[Room] = {
     if(!busy) {
       busy = true
-      val room = new Room(name, this, 4)
+      val room = new Room(name, this, 4, lobby)
       myRoom = room
-      Lobby.addRoom(room)
+      lobby.addRoom(room)
       Some(room)
     } else {
       None

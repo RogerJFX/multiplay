@@ -9,17 +9,18 @@ import game.Player
 import game.solitaire.Lobby
 import util.SimpleJsonParser
 
-class SolitaireWsActor(out: ActorRef) extends Actor with SimpleJsonParser with Task {
+class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJsonParser with Task {
   private val uuid = UUID.randomUUID()
 
-  private def getPlayer() = {
-    Lobby.getPlayer(uuid).getOrElse(throw new RuntimeException("Cannot get player"))
+  private def getPlayer(uuid: UUID = uuid) = {
+    lobby.getPlayer(uuid).getOrElse(throw new RuntimeException("Cannot get player"))
   }
 
   private def welcome(data: String): String = {
     val playerName = jsonString2T[PlayerNameDTO](data)
-    Lobby.addPlayer(uuid, new Player(uuid, playerName.name, out))// .getOrElse(throw new RuntimeException("Cannot add player"))
-    t2JsonString[PlayerListDTO](PlayerListDTO(Lobby.getIdlePlayers.map(p => (p.uuid, p.name))))
+    lobby.addPlayer(uuid, new Player(uuid, playerName.name, out, lobby))// .getOrElse(throw new RuntimeException("Cannot add player"))
+    t2JsonString[UuidDTO](UuidDTO(uuid));
+    // t2JsonString[PlayerListDTO](PlayerListDTO(Lobby.getIdlePlayers.map(p => (p.uuid, p.name))))
   }
 
   private def createRoom(data: String) = {
@@ -36,10 +37,47 @@ class SolitaireWsActor(out: ActorRef) extends Actor with SimpleJsonParser with T
   // UuidDTO
   private def enterRoom(data:String) = {
     val _uuid = jsonString2T[UuidDTO](data).uuid
-    val room = Lobby.getRoom(_uuid)
+    val room = lobby.getRoom(_uuid)
     room match {
       case Some(room) =>
-        room.addPlayer(getPlayer())
+        if(room.addPlayer(getPlayer())) {
+          t2JsonString[entity.game.PlayerDTO](entity.game.PlayerDTO(room.uuid, room.name))
+        } else {
+          """{"sorry": -1}"""
+        }
+      case _ =>
+        """{"foul": -1}"""
+    }
+  }
+  private def startGame() = {
+    val myPlayer = getPlayer();
+    val room = lobby.getRoom(myPlayer.myRoom.uuid)
+    room match {
+      case Some(room) =>
+        if(room.master == myPlayer) {
+          room.closeAndStart()
+          """{"done": 0}"""
+        } else {
+          """{"sorry": -1}"""
+        }
+      case _ =>
+        """{"foul": -1}"""
+    }
+  }
+  private def kickPlayer(data:String) = {
+    val _uuid = jsonString2T[UuidDTO](data).uuid
+    val myPlayer = getPlayer();
+    val room = lobby.getRoom(myPlayer.myRoom.uuid)
+    room match {
+      case Some(room) =>
+        if(room.master == myPlayer) {
+          room.kickPlayer(getPlayer(_uuid))
+          """{"done": 0}"""
+        } else {
+          """{"sorry": -1}"""
+        }
+      case _ =>
+        """{"foul": -1}"""
     }
   }
 
@@ -50,11 +88,19 @@ class SolitaireWsActor(out: ActorRef) extends Actor with SimpleJsonParser with T
       case TASK_COME_IN =>
         out ! OutMsg(msg.task, msg.ts, welcome(msg.data))
       case TASK_ROOM_LIST =>
-        out ! Lobby.createRoomsMsg(msg.ts)
+        out ! lobby.createRoomsMsg(msg.ts)
       case TASK_ROOM_CREATE =>
         out ! OutMsg(TASK_ROOM_ENTER, msg.ts, createRoom(msg.data))
       case TASK_ROOM_ENTER =>
-        out ! OutMsg(TASK_ROOM_ENTER, msg.ts, createRoom(msg.data))
+        out ! OutMsg(TASK_ROOM_ENTER, msg.ts, enterRoom(msg.data))
+      case TASK_ROOM_KICK =>
+        out ! OutMsg(TASK_VOID, msg.ts, kickPlayer(msg.data))
+      case TASK_ROOM_LEAVE =>
+        leaveRoom()
+        lobby.closeRoomIfMasterPlayer(lobby.getPlayer(uuid))
+        out ! OutMsg(OUT_KICKED, msg.ts, """{"bye": 0}""")
+      case TASK_START_GAME =>
+        out ! OutMsg(TASK_VOID, msg.ts, startGame())
     }
   }
 
@@ -74,13 +120,17 @@ class SolitaireWsActor(out: ActorRef) extends Actor with SimpleJsonParser with T
     // println("connect")
   }
 
-  private def goodbye() = {
+  private def leaveRoom() = {
     val player = getPlayer()
     val room = player.myRoom
     if(room != null) {
-      room.removePlayer(player);
+      room.removePlayer(player)
     }
-    Lobby.removePlayer(uuid)
+  }
+
+  private def goodbye() = {
+    leaveRoom()
+    lobby.removePlayer(uuid)
   }
 
   def killSocket(): Unit = {

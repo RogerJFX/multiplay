@@ -5,11 +5,13 @@ import java.util.UUID
 import entity.{OutMsg, Task}
 import entity.game.RoomListDTO
 import game.Player
+import javax.inject.Singleton
 import util.SimpleJsonParser
 
 import scala.collection.concurrent.TrieMap
 
-object Lobby extends SimpleJsonParser with Task {
+@Singleton
+class Lobby extends SimpleJsonParser with Task {
 
   private val playerMap = new TrieMap[UUID, Player]()
   private val roomMap = new TrieMap[UUID, Room]()
@@ -22,7 +24,7 @@ object Lobby extends SimpleJsonParser with Task {
 
   def removePlayer(uuid: UUID): Option[Player] = {
     val opt = playerMap.remove(uuid)
-    findRoomOfMasterPlayer(opt)
+    closeRoomIfMasterPlayer(opt)
     broadcastCount()
     opt
   }
@@ -53,7 +55,7 @@ object Lobby extends SimpleJsonParser with Task {
     roomMap.values.filter(r => !r.closed).toSeq
   }
 
-  def findRoomOfMasterPlayer(playerOpt: Option[Player]) = {
+  def closeRoomIfMasterPlayer(playerOpt: Option[Player]): Unit = {
     if(playerOpt.isDefined) {
       val roomOpt = roomMap.values.find(r => r.master == playerOpt.get)
       if(roomOpt.isDefined) {
@@ -64,13 +66,12 @@ object Lobby extends SimpleJsonParser with Task {
     }
   }
 
-  def createRoomsMsg(ts: Long = 0L): OutMsg = {
+  def createRoomsMsg(ts: Long = 0L): OutMsg =
     OutMsg(TASK_ROOM_LIST, ts, t2JsonString[RoomListDTO](RoomListDTO(roomMap.values.map(room => {
-      (room.uuid, room.name, room.maxPlayers, room.players.size)
+      (room.uuid, room.name, room.maxPlayers, room.players.size, !room.closed)
     }).toSeq)))
-  }
 
-  private def broadcastRooms(): Unit = {
+  def broadcastRooms(): Unit = {
     val msg = createRoomsMsg()
     getIdlePlayers.foreach(p => {
       p.send(msg)
