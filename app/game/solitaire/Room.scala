@@ -3,7 +3,7 @@ package game.solitaire
 import java.util.UUID
 
 import entity.{OutMsg, Task}
-import entity.game.PlayerListDTO
+import entity.game.{ChatDTO, PlayerListDTO}
 import game.Player
 import util.SimpleJsonParser
 
@@ -24,7 +24,7 @@ class Room(val name: String, val master: Player, val maxPlayers: Int, lobby: Lob
       players.append(player)
       broadcastPlayers()
       lobby.broadcastRooms()
-      player.myRoom = this
+      player.myRoom = Some(this)
       true
     } else {
       false
@@ -60,8 +60,10 @@ class Room(val name: String, val master: Player, val maxPlayers: Int, lobby: Lob
     })
   }
 
-  def broadcastRawMessage(): Unit = {
-
+  def broadcastRawMessage(playerName: String, msg: String): Unit = {
+    players.foreach(player => {
+      player.send(OutMsg(TASK_CHAT, 0, t2JsonString[ChatDTO](ChatDTO(playerName, msg))))
+    })
   }
 
   private def broadcastPlayers(): Unit = {

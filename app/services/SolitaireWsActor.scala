@@ -18,7 +18,7 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
 
   private def welcome(data: String): String = {
     val playerName = jsonString2T[SimpleStringDTO](data)
-    lobby.addPlayer(uuid, new Player(uuid, playerName.name, out, lobby))// .getOrElse(throw new RuntimeException("Cannot add player"))
+    lobby.addPlayer(uuid, new Player(uuid, playerName.str, out, lobby))// .getOrElse(throw new RuntimeException("Cannot add player"))
     t2JsonString[UuidDTO](UuidDTO(uuid));
     // t2JsonString[PlayerListDTO](PlayerListDTO(Lobby.getIdlePlayers.map(p => (p.uuid, p.name))))
   }
@@ -26,7 +26,7 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
   private def createRoom(data: String) = {
     val roomName = jsonString2T[SimpleStringDTO](data)
     val player = getPlayer()
-    val room = player.createRoom(roomName.name)
+    val room = player.createRoom(roomName.str)
     room match {
       case Some(room) =>
         t2JsonString[entity.game.PlayerDTO](entity.game.PlayerDTO(room.uuid, room.name))
@@ -50,44 +50,59 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
     }
   }
   private def startGame() = {
-    val myPlayer = getPlayer();
-    val room = lobby.getRoom(myPlayer.myRoom.uuid)
-    room match {
-      case Some(room) =>
-        if(room.master == myPlayer) {
-          room.closeAndStart()
-          """{"done": 0}"""
-        } else {
-          """{"sorry": -1}"""
-        }
-      case _ =>
-        """{"foul": -1}"""
+    val myPlayer = getPlayer()
+    val roomOpt = myPlayer.myRoom
+    if(roomOpt.isDefined) {
+      val room = lobby.getRoom(roomOpt.get.uuid)
+      room match {
+        case Some(room) =>
+          if(room.master == myPlayer) {
+            room.closeAndStart()
+            """{"done": 0}"""
+          } else {
+            """{"sorry": -1}"""
+          }
+        case _ =>
+          """{"foul": -1}"""
+      }
+    } else {
+      """{"foul": -1}"""
     }
+
   }
   private def kickPlayer(data:String) = {
     val _uuid = jsonString2T[UuidDTO](data).uuid
     val myPlayer = getPlayer();
-    val room = lobby.getRoom(myPlayer.myRoom.uuid)
-    room match {
-      case Some(room) =>
-        if(room.master == myPlayer) {
-          room.kickPlayer(getPlayer(_uuid))
-          """{"done": 0}"""
-        } else {
-          """{"sorry": -1}"""
-        }
-      case _ =>
-        """{"foul": -1}"""
+    val roomOpt = myPlayer.myRoom
+    if(roomOpt.isDefined) {
+      val room = lobby.getRoom(roomOpt.get.uuid)
+      room match {
+        case Some(room) =>
+          if (room.master == myPlayer) {
+            room.kickPlayer(getPlayer(_uuid))
+            """{"done": 0}"""
+          } else {
+            """{"sorry": -1}"""
+          }
+        case _ =>
+          """{"foul": -1}"""
+      }
+    } else {
+      """{"foul": -1}"""
     }
   }
+
   private def chat(data: String): Unit = {
-       val msg = jsonString2T[SimpleStringDTO](data).str
-       val myPlayer = getPlayer()
-       val playerName = myPlayer.name
-       val roomOpt = lobby.getRoom(myPlayer.myRoom.uuid)
+    val msg = jsonString2T[SimpleStringDTO](data).str
+    val myPlayer = getPlayer()
+    val roomOpt = myPlayer.myRoom
     if(roomOpt.isDefined) {
-           roomOpt.get.broadcastRawMessage(playerName, msg)
-         }
+      val playerName = myPlayer.name
+      val room = lobby.getRoom(roomOpt.get.uuid)
+      if (room.isDefined) {
+        room.get.broadcastRawMessage(playerName, msg)
+      }
+    }
   }
 
   private def resolve(msg: InMsg): Unit = {
@@ -134,8 +149,8 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
   private def leaveRoom() = {
     val player = getPlayer()
     val room = player.myRoom
-    if(room != null) {
-      room.removePlayer(player)
+    if(room.isDefined) {
+      room.get.removePlayer(player)
     }
   }
 

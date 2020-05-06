@@ -8,7 +8,7 @@ import game.solitaire.{Lobby, Room}
 
 class Player(val uuid: UUID, val name: String, out: ActorRef, lobby: Lobby) {
   var busy: Boolean = false
-  var myRoom: Room = _
+  var myRoom: Option[Room] = None
 
   def send(outMsg: OutMsg): Unit = {
     out ! outMsg
@@ -16,14 +16,14 @@ class Player(val uuid: UUID, val name: String, out: ActorRef, lobby: Lobby) {
 
   def leaveRoom() = {
     busy = false
-    myRoom = null
+    myRoom = None
   }
 
   def createRoom(name: String): Option[Room] = {
     if(!busy) {
       busy = true
       val room = new Room(name, this, 4, lobby)
-      myRoom = room
+      myRoom = Some(room)
       lobby.addRoom(room)
       Some(room)
     } else {
