@@ -13,6 +13,8 @@ trait Task {
   val TASK_START_GAME = "startGame"
   val TASK_GAME_INTERNAL = "game"
 
+  val TASK_CHAT = "chat"
+
   val OUT_KICKED = "kicked"
   val OUT_ROOM_KILLED = "roomKilled"
   val OUT_PLAYERS_IN_ROOM = "playersInRoom"

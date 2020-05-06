@@ -60,7 +60,11 @@ class Room(val name: String, val master: Player, val maxPlayers: Int, lobby: Lob
     })
   }
 
-  private def broadcastPlayers() = {
+  def broadcastRawMessage(): Unit = {
+
+  }
+
+  private def broadcastPlayers(): Unit = {
     players.foreach(player => {
       player.send(OutMsg(OUT_PLAYERS_IN_ROOM, 0, t2JsonString[PlayerListDTO](PlayerListDTO(players.map(p => (p.uuid, p.name)).toSeq))))
     })

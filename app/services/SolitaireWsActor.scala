@@ -3,7 +3,7 @@ package services
 import java.util.UUID
 
 import akka.actor.{Actor, ActorRef, PoisonPill}
-import entity.game.{PlayerListDTO, PlayerNameDTO, UuidDTO}
+import entity.game.{PlayerListDTO, SimpleStringDTO, UuidDTO}
 import entity.{InMsg, OutMsg, Task}
 import game.Player
 import game.solitaire.Lobby
@@ -17,14 +17,14 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
   }
 
   private def welcome(data: String): String = {
-    val playerName = jsonString2T[PlayerNameDTO](data)
+    val playerName = jsonString2T[SimpleStringDTO](data)
     lobby.addPlayer(uuid, new Player(uuid, playerName.name, out, lobby))// .getOrElse(throw new RuntimeException("Cannot add player"))
     t2JsonString[UuidDTO](UuidDTO(uuid));
     // t2JsonString[PlayerListDTO](PlayerListDTO(Lobby.getIdlePlayers.map(p => (p.uuid, p.name))))
   }
 
   private def createRoom(data: String) = {
-    val roomName = jsonString2T[PlayerNameDTO](data)
+    val roomName = jsonString2T[SimpleStringDTO](data)
     val player = getPlayer()
     val room = player.createRoom(roomName.name)
     room match {
@@ -80,11 +80,22 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
         """{"foul": -1}"""
     }
   }
+  private def chat(data: String): Unit = {
+       val msg = jsonString2T[SimpleStringDTO](data).str
+       val myPlayer = getPlayer()
+       val playerName = myPlayer.name
+       val roomOpt = lobby.getRoom(myPlayer.myRoom.uuid)
+    if(roomOpt.isDefined) {
+           roomOpt.get.broadcastRawMessage(playerName, msg)
+         }
+  }
 
   private def resolve(msg: InMsg): Unit = {
     msg.task match {
       case TASK_PING =>
         out ! OutMsg(msg.task, msg.ts, """{"res": "pong"}""")
+        case TASK_CHAT =>
+          chat(msg.data)
       case TASK_COME_IN =>
         out ! OutMsg(msg.task, msg.ts, welcome(msg.data))
       case TASK_ROOM_LIST =>
