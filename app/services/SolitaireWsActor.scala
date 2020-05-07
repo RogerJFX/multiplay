@@ -3,7 +3,7 @@ package services
 import java.util.UUID
 
 import akka.actor.{Actor, ActorRef, PoisonPill}
-import entity.game.{PlayerListDTO, SimpleStringDTO, UuidDTO}
+import entity.game.{SimpleStringDTO, UuidDTO}
 import entity.{InMsg, OutMsg, Task}
 import game.Player
 import game.solitaire.Lobby
@@ -19,7 +19,7 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
   private def welcome(data: String): String = {
     val playerName = jsonString2T[SimpleStringDTO](data)
     lobby.addPlayer(uuid, new Player(uuid, playerName.str, out, lobby))// .getOrElse(throw new RuntimeException("Cannot add player"))
-    t2JsonString[UuidDTO](UuidDTO(uuid));
+    t2JsonString[UuidDTO](UuidDTO(uuid))
     // t2JsonString[PlayerListDTO](PlayerListDTO(Lobby.getIdlePlayers.map(p => (p.uuid, p.name))))
   }
 
@@ -72,7 +72,7 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
   }
   private def kickPlayer(data:String) = {
     val _uuid = jsonString2T[UuidDTO](data).uuid
-    val myPlayer = getPlayer();
+    val myPlayer = getPlayer()
     val roomOpt = myPlayer.myRoom
     if(roomOpt.isDefined) {
       val room = lobby.getRoom(roomOpt.get.uuid)
@@ -146,7 +146,7 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
     // println("connect")
   }
 
-  private def leaveRoom() = {
+  private def leaveRoom(): Unit = {
     val player = getPlayer()
     val room = player.myRoom
     if(room.isDefined) {

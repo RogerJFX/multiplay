@@ -14,7 +14,7 @@ class Player(val uuid: UUID, val name: String, out: ActorRef, lobby: Lobby) {
     out ! outMsg
   }
 
-  def leaveRoom() = {
+  def leaveRoom(): Unit = {
     busy = false
     myRoom = None
   }

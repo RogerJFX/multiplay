@@ -44,7 +44,7 @@ class Room(val name: String, val master: Player, val maxPlayers: Int, lobby: Lob
   }
 
   def kickPlayer(player: Player): Unit = {
-    removePlayer(player);
+    removePlayer(player)
     player.send(OutMsg(OUT_KICKED, 0, "{}"))
   }
 

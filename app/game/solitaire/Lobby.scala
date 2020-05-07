@@ -45,7 +45,7 @@ class Lobby extends SimpleJsonParser with Task {
 
   def getRoom(uuid: UUID): Option[Room] = roomMap.get(uuid)
 
-  def getPlayer(uuid: UUID): Option[Player] = playerMap.get(uuid);
+  def getPlayer(uuid: UUID): Option[Player] = playerMap.get(uuid)
 
   def getIdlePlayers: Seq[Player] = {
     playerMap.values.filter(p => !p.busy).toSeq
@@ -78,7 +78,7 @@ class Lobby extends SimpleJsonParser with Task {
     })
   }
 
-  private def broadcastCount() = {
+  private def broadcastCount(): Unit = {
     val c = playerMap.size
     val r = roomMap.size
     val msg = OutMsg(TASK_SIZES, 0, s"""{"players": $c, "rooms": $r}""")
