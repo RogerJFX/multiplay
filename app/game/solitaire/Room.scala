@@ -9,11 +9,10 @@ class Room(override val name: String, override val master: Player, override val 
 
   val game = new Game(players)
 
-  override def broadcastRooms(): Unit = {
-    lobby.broadcastRooms()
-  }
+  override def broadcastRooms(): Unit = lobby.broadcastRooms()
 
-  override def callPlayer(player: Player): Unit = {
-    player.myRoom = Some(this)
-  }
+  override def callPlayer(player: Player): Unit = player.myRoom = Some(this)
+
+  override def runGame(): Unit = game.run()
+
 }

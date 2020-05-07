@@ -2,12 +2,11 @@ package game
 
 import akka.actor.ActorRef
 import entity.OutMsg
-import game.solitaire.Room
 
 abstract class AbstractPlayer (out: ActorRef){
 
-  var busy: Boolean // = false
-  var myRoom: Option[AbstractRoom] // = None
+  var busy: Boolean
+  var myRoom: Option[AbstractRoom]
 
   def send(outMsg: OutMsg): Unit = {
     out ! outMsg

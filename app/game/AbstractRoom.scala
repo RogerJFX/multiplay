@@ -20,6 +20,8 @@ abstract class AbstractRoom (val name: String, val master: Player, val maxPlayer
 
   def broadcastRooms()
 
+  def runGame()
+
   def callPlayer(player: Player)
 
   def addPlayer(player: Player): Boolean = {
@@ -54,6 +56,7 @@ abstract class AbstractRoom (val name: String, val master: Player, val maxPlayer
   def closeAndStart(): Unit = {
     closed = true
     broadcastRooms()
+    runGame()
     // TODO: start it
   }
 
