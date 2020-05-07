@@ -1,74 +1,19 @@
 package game.solitaire
 
-import java.util.UUID
-
-import entity.{OutMsg, Task}
-import entity.game.{ChatDTO, PlayerListDTO}
-import game.Player
+import entity.Task
+import game.AbstractRoom
 import util.SimpleJsonParser
 
-import scala.collection.mutable
+class Room(override val name: String, override val master: Player, override val maxPlayers: Int, lobby: Lobby)
+  extends AbstractRoom(name, master, maxPlayers) with SimpleJsonParser with Task{
 
-class Room(val name: String, val master: Player, val maxPlayers: Int, lobby: Lobby) extends SimpleJsonParser with Task{
+  val game = new Game(players)
 
-  var closed: Boolean = false
-
-  val players: mutable.ListBuffer[Player] = mutable.ListBuffer[Player](master)
-
-  val uuid: UUID = UUID.randomUUID()
-
-  broadcastPlayers()
-
-  def addPlayer(player: Player): Boolean = {
-    if(!closed && players.size < maxPlayers && !players.contains(player)) {
-      players.append(player)
-      broadcastPlayers()
-      lobby.broadcastRooms()
-      player.myRoom = Some(this)
-      true
-    } else {
-      false
-    }
-  }
-
-  def removePlayer(player: Player): Unit = {
-    player.leaveRoom()
-    if(player == master) {
-      players.remove(players.indexOf(player))
-      killRoom()
-    } else if(player != master /*&& !closed*/) {
-      players.remove(players.indexOf(player))
-      broadcastPlayers()
-    }
+  override def broadcastRooms(): Unit = {
     lobby.broadcastRooms()
   }
 
-  def kickPlayer(player: Player): Unit = {
-    removePlayer(player)
-    player.send(OutMsg(OUT_KICKED, 0, "{}"))
-  }
-
-  def closeAndStart(): Unit = {
-    closed = true
-    lobby.broadcastRooms()
-    // TODO: start it
-  }
-
-  def killRoom(): Unit = {
-    players.foreach(player => {
-      player.send(OutMsg(OUT_ROOM_KILLED, 0, "{}"))
-    })
-  }
-
-  def broadcastRawMessage(playerName: String, msg: String): Unit = {
-    players.foreach(player => {
-      player.send(OutMsg(TASK_CHAT, 0, t2JsonString[ChatDTO](ChatDTO(playerName, msg))))
-    })
-  }
-
-  private def broadcastPlayers(): Unit = {
-    players.foreach(player => {
-      player.send(OutMsg(OUT_PLAYERS_IN_ROOM, 0, t2JsonString[PlayerListDTO](PlayerListDTO(players.map(p => (p.uuid, p.name)).toSeq))))
-    })
+  override def callPlayer(player: Player): Unit = {
+    player.myRoom = Some(this)
   }
 }

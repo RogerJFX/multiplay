@@ -5,20 +5,20 @@ import java.util.UUID
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import entity.game.{SimpleStringDTO, UuidDTO}
 import entity.{InMsg, OutMsg, Task}
-import game.Player
-import game.solitaire.Lobby
+import game.AbstractPlayer
+import game.solitaire.{Lobby, Player}
 import util.SimpleJsonParser
 
 class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJsonParser with Task {
   private val uuid = UUID.randomUUID()
 
-  private def getPlayer(uuid: UUID = uuid) = {
+  private def getPlayer(uuid: UUID = uuid): Player = {
     lobby.getPlayer(uuid).getOrElse(throw new RuntimeException("Cannot get player"))
   }
 
   private def welcome(data: String): String = {
     val playerName = jsonString2T[SimpleStringDTO](data)
-    lobby.addPlayer(uuid, new Player(uuid, playerName.str, out, lobby))// .getOrElse(throw new RuntimeException("Cannot add player"))
+    lobby.addPlayer(uuid, new Player(uuid, playerName.str, out, lobby))
     t2JsonString[UuidDTO](UuidDTO(uuid))
     // t2JsonString[PlayerListDTO](PlayerListDTO(Lobby.getIdlePlayers.map(p => (p.uuid, p.name))))
   }
@@ -34,7 +34,7 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
         """{"foul": -1}"""
     }
   }
-  // UuidDTO
+
   private def enterRoom(data:String) = {
     val _uuid = jsonString2T[UuidDTO](data).uuid
     val room = lobby.getRoom(_uuid)

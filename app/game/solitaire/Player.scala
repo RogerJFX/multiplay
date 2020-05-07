@@ -1,23 +1,14 @@
-package game
+package game.solitaire
 
 import java.util.UUID
 
 import akka.actor.ActorRef
-import entity.OutMsg
-import game.solitaire.{Lobby, Room}
+import game.{AbstractPlayer, AbstractRoom}
 
-class Player(val uuid: UUID, val name: String, out: ActorRef, lobby: Lobby) {
-  var busy: Boolean = false
-  var myRoom: Option[Room] = None
+class Player(val uuid: UUID, val name: String, out: ActorRef, lobby: Lobby) extends AbstractPlayer(out){
 
-  def send(outMsg: OutMsg): Unit = {
-    out ! outMsg
-  }
-
-  def leaveRoom(): Unit = {
-    busy = false
-    myRoom = None
-  }
+  override var busy: Boolean = false
+  override var myRoom: Option[AbstractRoom] = None
 
   def createRoom(name: String): Option[Room] = {
     if(!busy) {
