@@ -14,8 +14,11 @@ trait Task {
   val TASK_GAME_INTERNAL = "game"
 
   val TASK_CHAT = "chat"
+  val TASK_GAME = "game"
 
   val OUT_KICKED = "kicked"
   val OUT_ROOM_KILLED = "roomKilled"
   val OUT_PLAYERS_IN_ROOM = "playersInRoom"
+
+  def now(): Long = System.currentTimeMillis()
 }

@@ -22,6 +22,8 @@ abstract class AbstractRoom (val name: String, val master: Player, val maxPlayer
 
   def runGame()
 
+  def forwardGameData(uuid: UUID, data: String)
+
   def callPlayer(player: Player)
 
   def addPlayer(player: Player): Boolean = {

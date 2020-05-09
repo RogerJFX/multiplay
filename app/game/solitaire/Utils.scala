@@ -2,7 +2,7 @@ package game.solitaire
 
 object Utils {
   def shuffle(): Array[Int] = {
-    val result = Array.ofDim[Int](52)
+    val result = Array.fill[Int](52)(-1)
     @scala.annotation.tailrec
     def rand(i: Int): Unit = {
       val candidate = Math.floor(Math.random * 52).toInt

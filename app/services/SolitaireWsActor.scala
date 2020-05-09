@@ -5,7 +5,6 @@ import java.util.UUID
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import entity.game.{SimpleStringDTO, UuidDTO}
 import entity.{InMsg, OutMsg, Task}
-import game.AbstractPlayer
 import game.solitaire.{Lobby, Player}
 import util.SimpleJsonParser
 
@@ -105,12 +104,26 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
     }
   }
 
+  private def gameForward(data: String): Unit = {
+    val msg = jsonString2T[SimpleStringDTO](data).str
+    val myPlayer = getPlayer()
+    val roomOpt = myPlayer.myRoom
+    if(roomOpt.isDefined) {
+      val room = lobby.getRoom(roomOpt.get.uuid)
+      if (room.isDefined) {
+        room.get.forwardGameData(myPlayer.uuid, msg)
+      }
+    }
+  }
+
   private def resolve(msg: InMsg): Unit = {
     msg.task match {
       case TASK_PING =>
         out ! OutMsg(msg.task, msg.ts, """{"res": "pong"}""")
-        case TASK_CHAT =>
-          chat(msg.data)
+      case TASK_CHAT =>
+        chat(msg.data)
+      case TASK_GAME =>
+        gameForward(msg.data)
       case TASK_COME_IN =>
         out ! OutMsg(msg.task, msg.ts, welcome(msg.data))
       case TASK_ROOM_LIST =>

@@ -1,5 +1,7 @@
 package game.solitaire
 
+import java.util.UUID
+
 import entity.Task
 import game.AbstractRoom
 import util.SimpleJsonParser
@@ -15,4 +17,5 @@ class Room(override val name: String, override val master: Player, override val 
 
   override def runGame(): Unit = game.run()
 
+  override def forwardGameData(uuid: UUID, data: String): Unit = game.takeGameData(uuid, data)
 }
