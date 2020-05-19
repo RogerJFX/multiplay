@@ -7,12 +7,12 @@ import entity.{OutMsg, Task}
 import scala.collection.mutable.ListBuffer
 
 class Game(players: ListBuffer[Player]) extends Task {
+
+  private var firstStarted = false
   def run(): Unit = {
-    val gameTask = Utils.shuffle()
+    val gameTask = Utils.shuffle().foldLeft[StringBuilder](new StringBuilder)((r, c) => r.append(c + ",")).toString()
     players.foreach(p => {
-        p.send(OutMsg("nextGame",
-          now(),
-          gameTask.foldLeft[StringBuilder](new StringBuilder)((r, c) => r.append(c + ",")).toString()))
+        p.send(OutMsg("nextGame", now(), gameTask))
     })
   }
 
@@ -26,6 +26,16 @@ class Game(players: ListBuffer[Player]) extends Task {
 
   private def checkAllWaitingAndRun(): Unit = {
     if(players.forall(p => p.waiting)) {
+      val roomOpt = players.head.myRoom
+      if(roomOpt.isDefined) {
+        roomOpt.get.closed = true
+        roomOpt.get.broadcastRooms()
+        if(!firstStarted) {
+          firstStarted = true
+          roomOpt.get.broadcastRawMessage("Server", "Game started. Have fun. \uD83E\uDD2A")
+        }
+        players.foreach(p => p.waiting = false)
+      }
       run()
     }
   }

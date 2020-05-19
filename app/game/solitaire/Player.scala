@@ -9,6 +9,7 @@ class Player(val uuid: UUID, val name: String, out: ActorRef, lobby: Lobby) exte
 
   override var busy: Boolean = false
   override var myRoom: Option[AbstractRoom] = None
+  override var waiting: Boolean = false
 
   def createRoom(name: String): Option[Room] = {
     if(!busy) {
@@ -27,4 +28,6 @@ class Player(val uuid: UUID, val name: String, out: ActorRef, lobby: Lobby) exte
   override def equals(o: Any): Boolean = {
     o.getClass == classOf[Player] && o.asInstanceOf[Player].uuid == uuid
   }
+
+
 }

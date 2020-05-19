@@ -19,7 +19,6 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
     val playerName = jsonString2T[SimpleStringDTO](data)
     lobby.addPlayer(uuid, new Player(uuid, playerName.str, out, lobby))
     t2JsonString[UuidDTO](UuidDTO(uuid))
-    // t2JsonString[PlayerListDTO](PlayerListDTO(Lobby.getIdlePlayers.map(p => (p.uuid, p.name))))
   }
 
   private def createRoom(data: String) = {
@@ -28,7 +27,7 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
     val room = player.createRoom(roomName.str)
     room match {
       case Some(room) =>
-        t2JsonString[entity.game.PlayerDTO](entity.game.PlayerDTO(room.uuid, room.name))
+        t2JsonString[entity.game.PlayerDTO](entity.game.PlayerDTO(room.uuid, room.name, false))
       case _ =>
         """{"foul": -1}"""
     }
@@ -40,7 +39,7 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
     room match {
       case Some(room) =>
         if(room.addPlayer(getPlayer())) {
-          t2JsonString[entity.game.PlayerDTO](entity.game.PlayerDTO(room.uuid, room.name))
+          t2JsonString[entity.game.PlayerDTO](entity.game.PlayerDTO(room.uuid, room.name, false))
         } else {
           """{"sorry": -1}"""
         }
@@ -48,27 +47,7 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
         """{"foul": -1}"""
     }
   }
-  private def startGame() = {
-    val myPlayer = getPlayer()
-    val roomOpt = myPlayer.myRoom
-    if(roomOpt.isDefined) {
-      val room = lobby.getRoom(roomOpt.get.uuid)
-      room match {
-        case Some(room) =>
-          if(room.master == myPlayer) {
-            room.closeAndStart()
-            """{"done": 0}"""
-          } else {
-            """{"sorry": -1}"""
-          }
-        case _ =>
-          """{"foul": -1}"""
-      }
-    } else {
-      """{"foul": -1}"""
-    }
 
-  }
   private def kickPlayer(data:String) = {
     val _uuid = jsonString2T[UuidDTO](data).uuid
     val myPlayer = getPlayer()
@@ -138,8 +117,6 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
         leaveRoom()
         lobby.closeRoomIfMasterPlayer(lobby.getPlayer(uuid))
         out ! OutMsg(OUT_KICKED, msg.ts, """{"bye": 0}""")
-      case TASK_START_GAME =>
-        out ! OutMsg(TASK_VOID, msg.ts, startGame())
     }
   }
 
@@ -152,7 +129,6 @@ class SolitaireWsActor(out: ActorRef, lobby: Lobby) extends Actor with SimpleJso
 
   override def postStop(): Unit = {
     goodbye()
-    // println("closed")
   }
 
   override def preStart(): Unit = {

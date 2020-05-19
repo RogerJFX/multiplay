@@ -7,7 +7,7 @@ abstract class AbstractPlayer (out: ActorRef){
 
   var busy: Boolean
   var myRoom: Option[AbstractRoom]
-  var waiting: Boolean = false
+  var waiting: Boolean
 
   def send(outMsg: OutMsg): Unit = {
     out ! outMsg
@@ -15,6 +15,7 @@ abstract class AbstractPlayer (out: ActorRef){
 
   def leaveRoom(): Unit = {
     busy = false
+    waiting = false
     myRoom = None
   }
 

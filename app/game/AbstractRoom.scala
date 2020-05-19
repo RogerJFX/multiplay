@@ -59,6 +59,7 @@ abstract class AbstractRoom (val name: String, val master: Player, val maxPlayer
     closed = true
     broadcastRooms()
     runGame()
+    broadcastRawMessage("Server", "Game started. Have fun. \uD83E\uDD2A")
     // TODO: start it
   }
 
@@ -76,7 +77,7 @@ abstract class AbstractRoom (val name: String, val master: Player, val maxPlayer
 
   private def broadcastPlayers(): Unit = {
     players.foreach(player => {
-      player.send(OutMsg(OUT_PLAYERS_IN_ROOM, 0, t2JsonString[PlayerListDTO](PlayerListDTO(players.map(p => (p.uuid, p.name)).toSeq))))
+      player.send(OutMsg(OUT_PLAYERS_IN_ROOM, 0, t2JsonString[PlayerListDTO](PlayerListDTO(players.map(p => (p.uuid, p.name, p.waiting)).toSeq))))
     })
   }
 }
