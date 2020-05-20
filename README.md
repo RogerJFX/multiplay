@@ -7,4 +7,6 @@ No tests and no clue if everything works in the end.
 
 I'm just winning against my wife, so everything is ok so far.
 
-:P
+Running at http://crazything.de
+
+&#x1f92a;
