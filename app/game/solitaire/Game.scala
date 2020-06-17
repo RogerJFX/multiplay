@@ -3,10 +3,11 @@ package game.solitaire
 import java.util.UUID
 
 import entity.{OutMsg, Task}
+import game.AbstractPlayer
 
 import scala.collection.mutable.ListBuffer
 
-class Game(players: ListBuffer[Player]) extends Task {
+class Game(players: ListBuffer[AbstractPlayer]) extends Task {
 
   private var firstStarted = false
   def run(): Unit = {
@@ -24,7 +25,7 @@ class Game(players: ListBuffer[Player]) extends Task {
     players.foreach(p => p.send(OutMsg(TASK_GAME, now(), s"$uuid::$data")))
   }
 
-  private def checkAllWaitingAndRun(): Unit = {
+  def checkAllWaitingAndRun(): Unit = {
     if(players.forall(p => p.waiting)) {
       val roomOpt = players.head.myRoom
       if(roomOpt.isDefined) {
@@ -46,7 +47,7 @@ class Game(players: ListBuffer[Player]) extends Task {
       case "points" =>
         tellAllMinusCaller(uuid, data)
       case "next" =>
-        val player: Option[Player] = players.find(p => p.uuid == uuid)
+        val player = players.find(p => p.uuid == uuid)
         if(player.isDefined) {
           if(!player.get.waiting) {
             player.get.waiting = true

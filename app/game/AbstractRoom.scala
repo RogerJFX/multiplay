@@ -4,15 +4,14 @@ import java.util.UUID
 
 import entity.game.{ChatDTO, PlayerListDTO}
 import entity.{OutMsg, Task}
-import game.solitaire.Player
 import util.SimpleJsonParser
 
 import scala.collection.mutable
 
-abstract class AbstractRoom (val name: String, val master: Player, val maxPlayers: Int) extends SimpleJsonParser with Task{
+abstract class AbstractRoom (val name: String, val master: AbstractPlayer, val maxPlayers: Int) extends SimpleJsonParser with Task{
   var closed: Boolean = false
 
-  val players: mutable.ListBuffer[Player] = mutable.ListBuffer[Player](master)
+  val players: mutable.ListBuffer[AbstractPlayer] = mutable.ListBuffer[AbstractPlayer](master)
 
   val uuid: UUID = UUID.randomUUID()
 
@@ -24,9 +23,11 @@ abstract class AbstractRoom (val name: String, val master: Player, val maxPlayer
 
   def forwardGameData(uuid: UUID, data: String)
 
-  def callPlayer(player: Player)
+  def callPlayer(player: AbstractPlayer)
 
-  def addPlayer(player: Player): Boolean = {
+  def notifyPlayerLeft()
+
+  def addPlayer(player: AbstractPlayer): Boolean = {
     if(!closed && players.size < maxPlayers && !players.contains(player)) {
       players.append(player)
       callPlayer(player)
@@ -38,7 +39,7 @@ abstract class AbstractRoom (val name: String, val master: Player, val maxPlayer
     }
   }
 
-  def removePlayer(player: Player): Unit = {
+  def removePlayer(player: AbstractPlayer): Unit = {
     player.leaveRoom()
     if(player == master) {
       players.remove(players.indexOf(player))
@@ -46,11 +47,12 @@ abstract class AbstractRoom (val name: String, val master: Player, val maxPlayer
     } else if(player != master /*&& !closed*/) {
       players.remove(players.indexOf(player))
       broadcastPlayers()
+      notifyPlayerLeft()
     }
     broadcastRooms()
   }
 
-  def kickPlayer(player: Player): Unit = {
+  def kickPlayer(player: AbstractPlayer): Unit = {
     removePlayer(player)
     player.send(OutMsg(OUT_KICKED, 0, "{}"))
   }

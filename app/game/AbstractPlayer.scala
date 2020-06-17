@@ -1,9 +1,11 @@
 package game
 
+import java.util.UUID
+
 import akka.actor.ActorRef
 import entity.OutMsg
 
-abstract class AbstractPlayer (out: ActorRef){
+abstract class AbstractPlayer (val uuid: UUID, val name: String, out: ActorRef){
 
   var busy: Boolean
   var myRoom: Option[AbstractRoom]

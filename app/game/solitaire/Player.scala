@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.ActorRef
 import game.{AbstractPlayer, AbstractRoom}
 
-class Player(val uuid: UUID, val name: String, out: ActorRef, lobby: Lobby) extends AbstractPlayer(out){
+class Player(override val uuid: UUID, override val name: String, out: ActorRef, lobby: Lobby) extends AbstractPlayer(uuid, name, out){
 
   override var busy: Boolean = false
   override var myRoom: Option[AbstractRoom] = None
