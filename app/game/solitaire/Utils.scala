@@ -1,20 +1,13 @@
 package game.solitaire
 
 object Utils {
-  def shuffle(): Array[Int] = {
-    val result = Array.fill[Int](52)(-1)
-    @scala.annotation.tailrec
-    def rand(i: Int): Unit = {
-      val candidate = Math.floor(Math.random * 52).toInt
-      if(result.contains(candidate)) {
-        rand(i)
-      } else {
-        result(i) = candidate
-      }
-    }
-    for(i <- result.indices) {
-      rand(i)
-    }
+  def shuffle(n: Int = 52): Array[Int] = {
+    val result = Array.fill[Int](n)(-1)
+    var candidate = 0
+    result.indices.foreach(i => {
+      do candidate = (Math.random * n).toInt while (result.contains(candidate))
+      result(i) = candidate
+    })
     result
   }
 }
